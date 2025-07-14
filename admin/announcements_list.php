@@ -3,15 +3,15 @@
         <div class="card">
             <div class="card-body">
                 <div class="container">
-                    <h5 class=""><?php if ($title == 'Edit News') {
-                        echo 'Edit News';
+                    <h5 class=""><?php if ($title == 'Edit Announcement') {
+                        echo 'Edit Announcement';
                     } else {
-                        echo 'Add News Publication';
+                        echo 'Add New Annoucement';
                     } ?></h5>
-                    <p class="">Please fill out the details for the news publication</p>
-                    <form id="newsForm" enctype="multipart/form-data">
+                    <p class="">Please fill out the details for the announcement publication</p>
+                    <form id="announcementForm" enctype="multipart/form-data">
 
-                        <input type="hidden" name="n_id" value="<?php echo isset($n_id) ? $n_id : '' ?>">
+                        <input type="hidden" name="a_id" value="<?php echo isset($a_id) ? $a_id : '' ?>">
                         <!-- Title Field -->
                         <div class="form-group">
                             <label for="title">Title <span class="text-danger">*</span></label>
@@ -94,8 +94,8 @@
     <div class="col-sm-7">
         <div class="card">
             <div class="card-body">
-                <h5>News Publications List</h5>
-                <table class="table table-bordered table-striped table-responsive" id="newsTable">
+                <h5>Announcement Publications List</h5>
+                <table class="table table-bordered table-striped table-responsive" id="announcementTable">
                     <thead class="">
                         <tr>
                             <th>Title</th>
@@ -110,7 +110,7 @@
                     </thead>
                     <tbody class="text-center">
                         <?php
-                        $news_sql = "SELECT * FROM news_publications ORDER BY created_at DESC";
+                        $news_sql = "SELECT * FROM announcement_publications ORDER BY created_at DESC";
                         $query = $conn->query($news_sql);
                         while ($row = $query->fetch_assoc()):
                             $short_content = mb_strimwidth(strip_tags($row['content']), 0, 60, "...");
@@ -122,7 +122,7 @@
                                 : '<span class="badge badge-warning">Draft</span>';
                             ?>
                             <tr>
-                                <td><?= htmlspecialchars($row['news_title']) ?></td>
+                                <td><?= htmlspecialchars($row['announcement_title']) ?></td>
                                 <td><?= date('F j, Y', strtotime($row['pub_date'])) ?></td>
                                 <td><?= htmlspecialchars($row['category']) ?></td>
                                 <td><?= $short_content ?></td>
@@ -132,16 +132,16 @@
                                 <td>
 
 
-                                    <a class="btn btn-success btn-sm view_news" href="javascript:void(0)"
-                                        data-id="<?php echo $row['n_id'] ?>"><i class="fas fa-eye"></i></a>
+                                    <a class="btn btn-success btn-sm view_announcement" href="javascript:void(0)"
+                                        data-id="<?php echo $row['a_id'] ?>"><i class="fas fa-eye"></i></a>
 
-                                    <a href="./index.php?page=edit_news&n_id=<?= $row['n_id']; ?>"
+                                    <a href="./index.php?page=edit_announcement&a_id=<?= $row['a_id']; ?>"
                                         class="btn btn-info btn-sm">
                                         <i class="fas fa-edit"></i>
                                     </a>
 
-                                    <a class="btn btn-danger btn-sm delete_news" href="javascript:void(0)"
-                                        data-id="<?php echo $row['n_id'] ?>"> <i class="fas fa-trash"></i></a>
+                                    <a class="btn btn-danger btn-sm delete_announcement" href="javascript:void(0)"
+                                        data-id="<?php echo $row['a_id'] ?>"> <i class="fas fa-trash"></i></a>
 
                                 </td>
                             </tr>
@@ -156,10 +156,10 @@
 </div>
 <script>
     $(document).ready(function () {
-        $('#newsTable').dataTable();
+        $('#announcementTable').dataTable();
 
-        $('.view_news').click(function () {
-            uni_modal("<i class='fa fa-id-card'></i> News Details", "<?php echo $_SESSION['login_view_folder'] ?>view_news.php?n_id=" + $(this).attr('data-id'))
+        $('.view_announcement').click(function () {
+            uni_modal("<i class='fa fa-id-card'></i> Annoucement Details", "<?php echo $_SESSION['login_view_folder'] ?>view_announcement.php?a_id=" + $(this).attr('data-id'))
         })
     })
 </script>
@@ -180,12 +180,12 @@
         });
 
         // AJAX submission
-        $('#newsForm').on('submit', function (e) {
+        $('#announcementForm').on('submit', function (e) {
             e.preventDefault();
             const formData = new FormData(this);
 
             $.ajax({
-                url: 'ajax.php?action=save_news',
+                url: 'ajax.php?action=save_announcement',
                 type: 'POST',
                 data: formData,
                 contentType: false,
@@ -194,10 +194,10 @@
                     $('button[type="submit"]').prop('disabled', true).text('Saving...');
                 },
                 success: function (response) {
-                    alert_toast('News saved successfully!', 'success');
-                    $('#newsForm')[0].reset();
+                    alert_toast('Announcement saved successfully!', 'success');
+                    $('#announcementForm')[0].reset();
                     setTimeout(function () {
-                        location.replace('index.php?page=news_list')
+                        location.replace('index.php?page=announcement_list')
                     }, 750)
                     $('#preview').hide();
                 },
@@ -210,15 +210,15 @@
             });
         });
 
-        $('.delete_news').click(function () {
-            _conf("Are you sure to delete this news?", "delete_news", [$(this).attr('data-id')])
+        $('.delete_announcement').click(function () {
+            _conf("Are you sure to delete this announcement?", "delete_announcement", [$(this).attr('data-id')])
         })
     });
 
-    function delete_news($id) {
+    function delete_announcement($id) {
         start_load()
         $.ajax({
-            url: 'ajax.php?action=delete_news',
+            url: 'ajax.php?action=delete_announcement',
             method: 'POST',
             data: { id: $id },
             success: function (resp) {

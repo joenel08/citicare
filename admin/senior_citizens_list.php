@@ -11,8 +11,7 @@
 
 			</div>
 			<div class="card-body">
-				<!-- <h4 class="text1-lightblue font-weight-bold">Subject List</h4> -->
-				<!-- <div class="lignblue"></div> -->
+			
 				<br>
 				<table class="table table-hover" id="list">
 
@@ -40,7 +39,7 @@
 					</thead>
 					<tbody class="text-center">
 						<?php
-						include 'db_connect.php'; // Make sure this file connects to your database
+					
 						
 						$senior_sql = "SELECT * FROM `senior_citizens`";
 
@@ -81,7 +80,7 @@
 								; ?></td>
 								<td>
 									<?= $status_badge; ?>
-									<!-- <button class="btn btn-sm btn-flat btn-primary">Print</button> -->
+								
 								</td>
 								<td><?= $row['barangay']; ?></td>
 								<td><?= $full_name; ?></td>
@@ -119,16 +118,16 @@
 		$("#manage-subject").on('submit', function (event) {
 			event.preventDefault();
 
-			var form_data = new FormData(this); // Use 'this' to refer to the form element
+			var form_data = new FormData(this); 
 			start_load()
 			$.ajax({
 				url: "ajax.php?action=save_subject",
 				type: "POST",
 				data: form_data,
-				processData: false, // Do not process the data
-				contentType: false, // Do not set contentType
+				processData: false, 
+				contentType: false, 
 				success: function (resp) {
-					// console.log(resp);
+				
 					if (resp == 1) {
 						alert_toast("Data successfully saved", 'success')
 						setTimeout(function () {
@@ -317,7 +316,8 @@
 		});
 
 		if (selected.length === 0) {
-			alert('Please select at least one user.');
+			alert_toast('Please select at least one user.','warning');
+
 			return;
 		}
 

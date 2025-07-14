@@ -388,5 +388,149 @@ class Action
 		}
 	}
 
+	function save_news()
+	{
+		$n_id = $_POST['n_id'];
+		$posted_by = $_SESSION['login_id'];
+		$title = $_POST['title'];
+		$pub_date = $_POST['pub_date'];
+		$category = $_POST['category'];
+		$content = $_POST['content'];
+		$status = $_POST['status'];
+
+		$uploadDir = 'assets/uploads/news_uploads/';
+		$attachment = ''; // Will contain the new file path if uploaded
+
+		if (!is_dir($uploadDir)) {
+			mkdir($uploadDir, 0777, true);
+		}
+
+		// Handle file upload
+		if (!empty($_FILES['attachment']['name'])) {
+			$fileName = basename($_FILES['attachment']['name']);
+			$attachment = $uploadDir . time() . "_" . $fileName;
+
+			if (!move_uploaded_file($_FILES['attachment']['tmp_name'], $attachment)) {
+				http_response_code(500);
+				echo "File upload failed.";
+				exit;
+			}
+		}
+
+		if (empty($n_id)) {
+			// INSERT mode
+			$stmt = $this->db->prepare("INSERT INTO news_publications (added_by, news_title, pub_date, category, content, attachment, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+			$stmt->bind_param("issssss", $posted_by, $title, $pub_date, $category, $content, $attachment, $status);
+		} else {
+			// UPDATE mode
+			if (!empty($attachment)) {
+				// Optionally delete old file
+				$get_old = $this->db->query("SELECT attachment FROM news_publications WHERE n_id = $n_id");
+				if ($get_old->num_rows > 0) {
+					$old = $get_old->fetch_assoc();
+					if (!empty($old['attachment']) && file_exists($old['attachment'])) {
+						unlink($old['attachment']);
+					}
+				}
+
+				// Update including new attachment
+				$stmt = $this->db->prepare("UPDATE news_publications SET news_title=?, pub_date=?, category=?, content=?, attachment=?, status=? WHERE n_id=?");
+				$stmt->bind_param("ssssssi", $title, $pub_date, $category, $content, $attachment, $status, $n_id);
+			} else {
+				// Update without changing the attachment
+				$stmt = $this->db->prepare("UPDATE news_publications SET news_title=?, pub_date=?, category=?, content=?, status=? WHERE n_id=?");
+				$stmt->bind_param("sssssi", $title, $pub_date, $category, $content, $status, $n_id);
+			}
+		}
+
+		if ($stmt->execute()) {
+			// echo "Success";
+		} else {
+			http_response_code(500);
+			echo "Database operation failed: " . $stmt->error;
+		}
+
+		$stmt->close();
+	}
+	function delete_news()
+	{
+		extract($_POST);
+		$delete = $this->db->query("DELETE FROM news_list where n_id = " . $id);
+		if ($delete)
+			return 1;
+	}
+
+
+	function save_announcement()
+	{
+		$a_id = $_POST['a_id'];
+		$posted_by = $_SESSION['login_id'];
+		$title = $_POST['title'];
+		$pub_date = $_POST['pub_date'];
+		$category = $_POST['category'];
+		$content = $_POST['content'];
+		$status = $_POST['status'];
+
+		$uploadDir = 'assets/uploads/news_uploads/';
+		$attachment = ''; // Will contain the new file path if uploaded
+
+		if (!is_dir($uploadDir)) {
+			mkdir($uploadDir, 0777, true);
+		}
+
+		// Handle file upload
+		if (!empty($_FILES['attachment']['name'])) {
+			$fileName = basename($_FILES['attachment']['name']);
+			$attachment = $uploadDir . time() . "_" . $fileName;
+
+			if (!move_uploaded_file($_FILES['attachment']['tmp_name'], $attachment)) {
+				http_response_code(500);
+				echo "File upload failed.";
+				exit;
+			}
+		}
+
+		if (empty($a_id)) {
+			// INSERT mode
+			$stmt = $this->db->prepare("INSERT INTO announcement_publications (added_by, announcement_title, pub_date, category, content, attachment, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+			$stmt->bind_param("issssss", $posted_by, $title, $pub_date, $category, $content, $attachment, $status);
+		} else {
+			// UPDATE mode
+			if (!empty($attachment)) {
+				// Optionally delete old file
+				$get_old = $this->db->query("SELECT attachment FROM announcement_publications WHERE a_id = $a_id");
+				if ($get_old->num_rows > 0) {
+					$old = $get_old->fetch_assoc();
+					if (!empty($old['attachment']) && file_exists($old['attachment'])) {
+						unlink($old['attachment']);
+					}
+				}
+
+				// Update including new attachment
+				$stmt = $this->db->prepare("UPDATE announcement_publications SET announcement_title=?, pub_date=?, category=?, content=?, attachment=?, status=? WHERE a_id=?");
+				$stmt->bind_param("ssssssi", $title, $pub_date, $category, $content, $attachment, $status, $a_id);
+			} else {
+				// Update without changing the attachment
+				$stmt = $this->db->prepare("UPDATE announcement_publications SET announcement_title=?, pub_date=?, category=?, content=?, status=? WHERE a_id=?");
+				$stmt->bind_param("sssssi", $title, $pub_date, $category, $content, $status, $a_id);
+			}
+		}
+
+		if ($stmt->execute()) {
+			// echo "Success";
+		} else {
+			http_response_code(500);
+			echo "Database operation failed: " . $stmt->error;
+		}
+
+		$stmt->close();
+	}
+	function delete_announcement()
+	{
+		extract($_POST);
+		$delete = $this->db->query("DELETE FROM announcement_list where a_id = " . $id);
+		if ($delete)
+			return 1;
+	}
 
 }

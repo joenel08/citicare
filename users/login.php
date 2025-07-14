@@ -6,6 +6,21 @@ include_once("../db_connect.php");
 $data = json_decode(file_get_contents('php://input'));
 
 $contact_info = isset($data->contact_info) ? $data->contact_info : null;
+
+$contact_info = isset($data->contact_info) ? $data->contact_info : null;
+
+if ($contact_info !== null) {
+    // Remove any non-digit characters (optional, for cleaner input)
+    $contact_info = preg_replace('/\D/', '', $contact_info);
+
+    // Convert numbers starting with '0' to '+63'
+    if (preg_match('/^0\d{10}$/', $contact_info)) {
+        $contact_info = '+63' . substr($contact_info, 1);
+    } elseif (preg_match('/^63\d{10}$/', $contact_info)) {
+        $contact_info = '+' . $contact_info;
+    }
+}
+
 $password = isset($data->password) ? $data->password : null;
 
 if ($conn->connect_error) {

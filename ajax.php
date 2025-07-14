@@ -75,7 +75,27 @@ if($action == 'approve_user'){
 		echo $save;
 }
 
+if($action == 'save_news'){
+	$save = $crud->save_news();
+	if($save)
+		echo $save;
+}
 
+if($action == 'delete_news'){
+	$save = $crud->delete_news();
+	if($save)
+		echo $save;
+}
+if($action == 'save_announcement'){
+	$save = $crud->save_announcement();
+	if($save)
+		echo $save;
+}
 
+if($action == 'delete_announcement'){
+	$save = $crud->delete_announcement();
+	if($save)
+		echo $save;
+}
 ob_end_flush();
 ?>

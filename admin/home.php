@@ -47,7 +47,9 @@
       <div class="info-box-content">
         <span class="info-box-text">Total Senior Citizen</span>
         <span class="info-box-number">
-          1560
+          <?php
+          echo $conn->query("SELECT sc.user_id, u.id from users u left join senior_citizens sc on sc.user_id = u.id where sc.is_verified = 1")->num_rows
+          ?>
 
         </span>
       </div>

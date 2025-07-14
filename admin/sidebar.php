@@ -62,7 +62,9 @@
         <a href="#"
           class="d-block text-white"><?php echo ucwords($_SESSION['login_firstname']) . ' ' . $_SESSION['login_lastname'] ?></a>
       </div>
+      
     </div>
+    
     <nav class="mt-2">
       <ul class="nav nav-pills nav-sidebar flex-column nav-flat" data-widget="treeview" role="menu"
         data-accordion="false">
@@ -138,14 +140,14 @@
 
         <li class="nav-item dropdown">
 
-          <a class="nav-link nav-news_list" href="./index.php?page=news_list" id="">
+          <a class="nav-link nav-news_list nav-edit_news" href="./index.php?page=news_list" id="">
             <i class="nav-icon  fa fa-newspaper"></i>
             <p>News</p>
           </a>
         </li>
         <li class="nav-item dropdown">
 
-          <a class="nav-link nav-announcements" href="./index.php?page=announcements" id=""><i
+          <a class="nav-link nav-announcements_list" href="./index.php?page=announcements_list" id=""><i
               class="nav-icon  fa fa-archive"></i>
             <p>Announcements</p>
           </a>
