@@ -36,10 +36,15 @@ $stmt = $conn->prepare("INSERT INTO senior_citizens (
     user_id, application_no, first_name, middle_name, last_name, birthdate, age, gender, civil_status,
     education, occupation, place_of_birth, contact_no, barangay, municipality, province,
     emergency_name, emergency_contact, emergency_relationship, social_pensioner, retiree, retiree_desc,
-    is_gsis, health_status, birth_proof, residency_proof, photo_id, date_registered
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+    is_gsis, health_status, birth_proof, residency_proof, photo_id,
+    qr_code, idCard_no, is_verified,
+    date_registered
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+$qr_code = null;
+$idCard_no = null;
+$is_verified = 0;
 
-$stmt->bind_param("issssissssssssssssiiisssss",
+$stmt->bind_param("issssissssssssssssiiissssssssi",
     $_POST["user_id"],
     $applicationNo,
     $_POST["first_name"],
@@ -66,7 +71,10 @@ $stmt->bind_param("issssissssssssssssiiisssss",
     $_POST["health_status"],
     $birthProof,
     $residencyProof,
-    $photoId
+    $photoId,
+    $qr_code,      // NULL
+    $idCard_no,    // NULL
+    $is_verified   // 0
 );
 
 if ($stmt->execute()) {
