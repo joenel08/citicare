@@ -115,7 +115,7 @@ function healthChecked($status, $value)
             <div class="position-relative">
                 <div class="photo-id-box mb-3">
                     <div class="photo-box">
-                        <img src="<?= $row['photo_id'] ?>" alt="Photo" style="max-height:100%; max-width:100%;">
+                        <img src="assets/uploads/<?= $row['photo_id'] ?>" alt="Photo" style="max-height:100%; max-width:100%;">
                     </div>
                     <div class="id-number mt-2">
                         <strong>ID Number:</strong>
@@ -229,11 +229,11 @@ function healthChecked($status, $value)
                 <label for="" class="mt-3">Attached Requirements:</label>
                 <div class="row">
                     <div class="col">
-                        <img class="img-fluid" src="<?= $row['birth_proof'] ?>" alt="Photo">
+                        <img class="img-fluid" src="assets/uploads/<?= $row['birth_proof'] ?>" alt="Photo">
                     </div>
 
                     <div class="col">
-                        <img class="img-fluid" src="<?= $row['residency_proof'] ?>" alt="Photo">
+                        <img class="img-fluid" src="assets/uploads/<?= $row['residency_proof'] ?>" alt="Photo">
                     </div>
                 </div>
             </div>

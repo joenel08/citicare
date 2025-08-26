@@ -1,19 +1,23 @@
 <?php
 include_once("../db_connect.php");
 
-$targetDir = "assets/uploads/";
+$targetDir = "../assets/uploads/";
 
-function uploadFile($inputName, $targetDir) {
-    if (!isset($_FILES[$inputName])) return null;
-    $filename = basename($_FILES[$inputName]["name"]);
-    $targetPath = $targetDir . time() . "_" . $filename;
+function uploadFile($inputName, $targetDir)
+{
+    if (!isset($_FILES[$inputName]))
+        return null;
+    $filename = time() . "_" . basename($_FILES[$inputName]["name"]);
+    $targetPath = $targetDir . $filename;
     if (move_uploaded_file($_FILES[$inputName]["tmp_name"], $targetPath)) {
-        return $targetPath;
+        // return only filename for DB saving
+        return $filename;
     }
     return null;
 }
 
-function generateUniqueApplicationNo($conn) {
+function generateUniqueApplicationNo($conn)
+{
     do {
         $appNo = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
         $check = $conn->prepare("SELECT sc_id FROM senior_citizens WHERE application_no = ?");
@@ -44,7 +48,8 @@ $qr_code = null;
 $idCard_no = null;
 $is_verified = 0;
 
-$stmt->bind_param("issssissssssssssssiiissssssssi",
+$stmt->bind_param(
+    "isssssssssssssssssiiissssssssi",
     $_POST["user_id"],
     $applicationNo,
     $_POST["first_name"],
@@ -69,20 +74,27 @@ $stmt->bind_param("issssissssssssssssiiissssssssi",
     $_POST["retiree_desc"],
     $_POST["is_gsis"],
     $_POST["health_status"],
-    $birthProof,
-    $residencyProof,
-    $photoId,
-    $qr_code,      // NULL
-    $idCard_no,    // NULL
-    $is_verified   // 0
+    $birthProof,      // just filename
+    $residencyProof,  // just filename
+    $photoId,         // just filename
+    $qr_code,
+    $idCard_no,
+    $is_verified
 );
 
 if ($stmt->execute()) {
-    echo json_encode(["success" => true, "message" => "Senior record saved.", "application_no" => $applicationNo]);
+    echo json_encode([
+        "success" => true,
+        "message" => "Senior record saved.",
+        "application_no" => $applicationNo,
+        "user_id" => $_POST["user_id"],
+    ]);
 } else {
-    echo json_encode(["success" => false, "message" => $stmt->error]);
+    echo json_encode([
+        "success" => false,
+        "message" => $stmt->error
+    ]);
 }
 
 $stmt->close();
 $conn->close();
-?>

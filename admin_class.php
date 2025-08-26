@@ -11,7 +11,6 @@ use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
 class Action
 {
 	private $db;
-
 	public function __construct()
 	{
 		ob_start();
@@ -28,14 +27,13 @@ class Action
 	function login()
 	{
 		extract($_POST);
-		$type = array("", "admin_users", "faculty_list", "student_list");
-		$type2 = array("", "admin", "faculty", "student");
+		
 
 		// Only allow admin users to log in
 		$login = 1;
 
 		// Query to fetch user details
-		$qry = $this->db->query("SELECT *, concat(firstname, ' ', lastname) as name FROM {$type[$login]} 
+		$qry = $this->db->query("SELECT *, concat(firstname, ' ', lastname) as name FROM admin_users 
                      WHERE email = '" . $email . "' AND password = '" . md5($password) . "'");
 
 		if ($qry->num_rows > 0) {
@@ -50,18 +48,9 @@ class Action
 					}
 				}
 				$_SESSION['login_type'] = $login;
-				$_SESSION['login_view_folder'] = $type2[$login] . '/';
+				$_SESSION['login_view_folder'] = 'admin/';
 
-				// Fetch academic details
-				$academic = $this->db->query("SELECT * FROM academic_list WHERE is_default = 1");
-				if ($academic->num_rows > 0) {
-					foreach ($academic->fetch_assoc() as $k => $v) {
-						if (!is_numeric($k)) {
-							$_SESSION['academic'][$k] = $v;
-						}
-					}
-				}
-				return 1; // Login successful
+				return 1;
 			} else {
 				return 3; // Account not verified
 			}
@@ -362,7 +351,7 @@ class Action
 		if (!file_exists($qrDir)) {
 			mkdir($qrDir, 0777, true);
 		}
-		$qrFile = "$qrDir/$qrContent.png";
+		$qrFile = "$qrContent.png";
 
 		// Generate QR code
 		$qr = Builder::create()
@@ -532,5 +521,76 @@ class Action
 		if ($delete)
 			return 1;
 	}
+	function save_assistance()
+	{
+		$assistance_id = $_POST['assistance_id'] ?? null;
+		$category = $_POST['category'];
+		$type = $_POST['assistance_type'];
+		$date = $_POST['date'];
+		$assistance_description = $_POST['assistance_description'];
+
+		if (empty($assistance_id)) {
+			// INSERT
+			$stmt = $this->db->prepare("INSERT INTO assistance (category, assistance_type, assistance_description, date_given) VALUES (?, ?, ?, ?)");
+			$stmt->bind_param("ssss", $category, $type, $assistance_description, $date);
+		} else {
+			// UPDATE
+			$stmt = $this->db->prepare("UPDATE assistance SET category = ?, assistance_type = ?, assistance_description = ?, date_given = ? WHERE assistance_id = ?");
+			$stmt->bind_param("ssssi", $category, $type, $assistance_description, $date, $assistance_id);
+		}
+
+		if ($stmt && $stmt->execute()) {
+			echo "success";
+		} else {
+			echo "Error saving data.";
+		}
+	}
+	function save_attendance()
+{
+    $qr_data = $_POST['qr_data']; // Example: JDHHD JDJDU JDJDH - 2025-02 - 65
+    $assistance_id = $_POST['assistance_id'];
+
+    // Build full QR code path with .png
+    $qr_full_path = 'assets/uploads/qrcodes/' . $qr_data . '.png';
+
+    // Check if QR code exists
+    $stmt = $this->db->prepare("SELECT user_id FROM senior_citizens WHERE qr_code = ?");
+    $stmt->bind_param("s", $qr_full_path);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        echo "not_found";
+        return;
+    }
+
+    $row = $result->fetch_assoc();
+    $user_id = $row['user_id'];
+    $today = date('Y-m-d');
+
+    // Check if already marked
+    $check = $this->db->prepare("SELECT attendance_id FROM attendance WHERE user_id = ? AND assistance_id = ? AND date_marked = ?");
+    $check->bind_param("iis", $user_id, $assistance_id, $today);
+    $check->execute();
+    $checkResult = $check->get_result();
+
+    if ($checkResult->num_rows > 0) {
+        echo "already_marked";
+        return;
+    }
+
+    // Insert attendance
+    $insert = $this->db->prepare("INSERT INTO attendance (user_id, assistance_id, date_marked) VALUES (?, ?, ?)");
+    $insert->bind_param("iis", $user_id, $assistance_id, $today);
+
+    if ($insert->execute()) {
+        echo "success";
+    } else {
+        echo "error_saving";
+    }
+}
+
+
+
 
 }

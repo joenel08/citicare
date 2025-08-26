@@ -97,5 +97,17 @@ if($action == 'delete_announcement'){
 	if($save)
 		echo $save;
 }
+if($action == 'save_assistance'){
+	$save = $crud->save_assistance();
+	if($save)
+		echo $save;
+}
+if($action == 'save_attendance'){
+	$save = $crud->save_attendance();
+	if($save)
+		echo $save;
+}
+
+
 ob_end_flush();
 ?>

@@ -1,52 +1,100 @@
 <div class="card mt-4">
     <div class="card-header">
-        <button class="btn btn-success btn-flat" id="printSoloParentIDs"><i class="fa fa-print"></i> Print Solo Parent ID</button>
+        <a href="" class="btn btn-success btn-flat"><i class="fa fa-plus"></i> Add New</a>
+        <button class="btn btn-info btn-flat"><i class="fa fa-file-excel"></i> Download</button>
+        <button class="btn btn-warning btn-flat" id="printSelectedIds"><i class="fa fa-print"></i> Print
+            ID</button>
+
     </div>
     <div class="card-body">
         <table class="table table-hover" id="soloParentTable">
             <thead>
                 <tr class="text-center">
-                    <th><input type="checkbox" id="selectAllSolo"></th>
-                    <th>Application No.</th>
-                    <th>Barangay</th>
-                    <th>Full Name</th>
-                    <th>Gender</th>
-                    <th>Civil Status</th>
-                    <th>Birthdate</th>
-                    <th>Age</th>
-                    <th>Address</th>
-                    <th>Action</th>
+                    <th><input type="checkbox" name="" id=""></th>
+                    <th>QR Code</th>
+                    <th class="text-center">Application No.</th>
+                    <th class="text-center">ID No.</th>
+
+                    <th>Status</th>
+                    <th class="text-center">Barangay</th>
+                    <th class="text-center">FullName</th>
+                    <th class="text-center">Gender</th>
+                    <th class="text-center">Civil Status</th>
+
+
+                    <th class="text-center">Birthdate</th>
+                    <th class="text-center">Age</th>
+
+                    <th class="text-center">Full Address</th>
+
+                    <th class="text-center">Action</th>
                 </tr>
             </thead>
             <tbody class="text-center">
-                <tr>
-                    <td>
-                        <input type="checkbox" class="select-solo" 
-                            data-applicationno="84210"
-                            data-fullname="Maria Santos"
-                            data-gender="Female"
-                            data-civilstatus="Single"
-                            data-birthdate="March 3, 1990"
-                            data-age="34"
-                            data-address="Zone 3, San Vicente, Cabagan, Isabela"
-                            data-barangay="San Vicente"
-                        >
-                    </td>
-                    <td>84210</td>
-                    <td>San Vicente</td>
-                    <td>Maria Santos</td>
-                    <td>Female</td>
-                    <td>Single</td>
-                    <td>March 3, 1990</td>
-                    <td>34</td>
-                    <td>Zone 3, San Vicente, Cabagan, Isabela</td>
-                    <td>
-                        <a href="#" class="btn btn-success btn-sm"><i class="fas fa-eye"></i></a>
-                        <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i></a>
-                        <a href="#" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
-                    </td>
-                </tr>
-                <!-- Add more rows here -->
+                <?php
+                $solo_sql = "SELECT * FROM `solo_parent_applications`";
+                $query = $conn->query($solo_sql);
+                while ($row = $query->fetch_assoc()):
+                    $full_name = strtoupper($row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']);
+                    $address = $row['barangay'] . ', ' . $row['municipality'] . ', ' . $row['province'];
+                    $status_badge = $row['is_verified'] ? '<span class="badge badge-success">Registered</span>' : '<span class="badge badge-warning">Pending</span>';
+                    ?>
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="select-user" data-applicationno="<?= $row['spa_id']; ?>"
+                                data-id-card-no="<?= $row['application_no']; ?>" data-photo="<?= $row['photo_id']; ?>"
+                                data-fullname="<?= $full_name; ?>" data-gender="<?= $row['gender']; ?>"
+                                data-civilstatus="<?= $row['civil_status']; ?>"
+                                data-birthdate="<?= date('F j, Y', strtotime($row['birthdate'])); ?>"
+                                data-age="<?= $row['age']; ?>" data-address="<?= $address; ?>"
+                                data-qr_code="<?= $row['qr_code'] ?? ''; ?>" data-barangay="<?= $row['barangay']; ?>">
+                        </td>
+                        <td>
+                            <?php
+                            if (empty($row['qr_code'])) {
+                                echo '<span class="badge badge-warning">Pending</span>';
+                            } else {
+                                echo '<img class="img-fluid" src="' . $row['qr_code'] . '" alt="">';
+                            }
+                            ?>
+                        </td>
+                        <td><?= $row['application_no']; ?></td>
+                        <td><?php
+                        if (empty($row['idCard_no']) || $row['idCard_no'] == Null) {
+                            echo '<span class="badge badge-warning">Pending</span>';
+                        } else {
+                            echo $row['idCard_no'];
+                        }
+                        ; ?></td>
+                        <td>
+                            <?= $status_badge; ?>
+
+                        </td>
+
+                        <td><?= $row['barangay']; ?></td>
+                        <td><?= $full_name; ?></td>
+                        <td><?= $row['gender']; ?></td>
+                        <td><?= $row['civil_status']; ?></td>
+                        <td><?= date('F j, Y', strtotime($row['birthdate'])); ?></td>
+                        <td><?= $row['age']; ?></td>
+                        <td><?= $address; ?></td>
+                        <td>
+                            <a href="./index.php?page=view_solo_application&id=<?= $row['spa_id']; ?>"
+                                class="btn btn-success text-white btn-sm btn-flat">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="./index.php?page=edit_solo_application&id=<?= $row['spa_id']; ?>"
+                                class="btn btn-lightblue text-white btn-sm btn-flat">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="javascript:void(0)" data-id="<?= $row['spa_id']; ?>"
+                                class="delete_user btn btn-danger btn-sm btn-flat">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+
             </tbody>
         </table>
     </div>
