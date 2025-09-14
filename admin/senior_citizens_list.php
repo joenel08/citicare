@@ -5,7 +5,7 @@
 		<div class="card">
 			<div class="card-header">
 				<a href="" class="btn btn-success btn-flat"><i class="fa fa-plus"></i> Add New</a>
-				<button class="btn btn-info btn-flat"><i class="fa fa-file-excel"></i> Download</button>
+				<button class="btn btn-info btn-flat" id="downloadMasterlist"><i class="fa fa-file-excel"></i> Download</button>
 				<button class="btn btn-warning btn-flat" id="printSelectedIds"><i class="fa fa-print"></i> Print
 					ID</button>
 
@@ -13,11 +13,12 @@
 			<div class="card-body">
 			
 				<br>
-				<table class="table table-hover" id="list">
+				<table class="table table-hover table-responsive" id="list">
 
 					<thead>
 						<tr class="text-center">
 							<th><input type="checkbox" name="" id=""></th>
+							<th>Status</th>
 							<th>QR Code</th>
 							<th class="text-center">Application No.</th>
 							<th class="text-center">ID No.</th>
@@ -49,7 +50,8 @@
 							$address = $row['barangay'] . ', ' . $row['municipality'] . ', ' . $row['province'];
 							$status_badge = $row['is_verified'] ? '<span class="badge badge-success">Registered</span>' : '<span class="badge badge-warning">Pending</span>';
 							?>
-							<tr>
+							<tr data-is-verified="<?= $row['is_verified']; ?>">
+
 								<td>
 									<input type="checkbox" class="select-user"
 										data-applicationno="<?= $row['application_no']; ?>"
@@ -61,10 +63,22 @@
 										data-qr_code="<?= $row['qr_code']; ?>" data-barangay="<?= $row['barangay']; ?>">
 								</td>
 								<td><?php
+								if($row['senior_status'] == 'alive'){
+									echo'<span class="badge badge-success">Alive</span>';
+								}else if($row['senior_status'] == 'deceased'){
+									echo'<span class="badge badge-danger">Deceased</span>';
+
+								}
+
+								
+								
+								?></td>
+								
+								<td><?php
 								if (empty($row['qr_code']) || $row['qr_code'] == Null) {
 									echo '<span class="badge badge-warning">Pending</span>';
 								} else {
-									echo '<img class="img-fluid" src="' . $row['qr_code'] . '" alt="">';
+									echo '<img class="img-fluid" src="assets/uploads/qrcodes/' . $row['qr_code'] . '" alt="">';
 								}
 								; ?></td>
 
@@ -153,6 +167,7 @@
 
 <script>
 	function printSeniorID(data) {
+		
 		const win = window.open('', '', 'height=1000,width=800');
 		const css = `
 		<style>
@@ -167,6 +182,13 @@
   width: 336px;
   height: 213px;
   border: 1px solid #000;
+}
+  @media print {
+    .id-card-print.front,
+    .id-card-print.back {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 }
 
 
@@ -206,11 +228,29 @@
 				justify-content: space-between;
 				font-size: 10px;
 				}
+				/* Front ID Card */
+    .id-card-print.front {
+        background-image: url('../assets/uploads/ID_background.png');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+    
+    /* Back ID Card */
+    .id-card-print.back {
+        background-image: url('../assets/uploads/ID_background.png');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
 			</style>`;
 
 		let allCards = data.map(d => `
 		<div class="card-pair">
-		<div class="id-card-print front">
+		<div class="id-card-print front" style=" background-image: url('assets/uploads/ID_background.png');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;">
 			<div class="header">
 				<img src="assets/img/santa maria-seal.png" class="logo" alt="Logo">
 				<div class="title">
@@ -222,7 +262,7 @@
 				</div>
 				${d.qr_code ? `
 				
-					<img src="${d.qr_code}" class="qr img-fluid" alt="QR Code">
+					<img src="assets/uploads/qrcodes/${d.qr_code}" class="qr img-fluid" alt="QR Code">
 				` : ''}
 				
 			</div>
@@ -241,7 +281,7 @@
 				</div>
 				<div class="profile-section">
 					<div class="profile-pic">
-						<img src="${d.photo}" alt="Profile">
+						<img src="assets/uploads/${d.photo}" alt="Profile">
 					</div>
 					<div class="id-number-display">
 						<div class="number">${d.idCard_no ?? 'PENDING'}</div>
@@ -254,7 +294,10 @@
 
 			
 		</div>
-		<div class="id-card-print back">
+		<div class="id-card-print back" style=" background-image: url('assets/uploads/ID_background.png');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;">
 		<!-- BACK -->
 			<div class="back-content">
 				<div class="back-title">BENEFITS AND PRIVILEGES UNDER REPUBLIC ACT NO. 9257</div>
@@ -323,4 +366,70 @@
 
 		printSeniorID(selected);
 	});
+</script>
+
+<script>
+    document.getElementById('downloadMasterlist').addEventListener('click', function() {
+        // Find the table and all its rows
+        const table = document.getElementById('list');
+        const rows = table.querySelectorAll('tbody tr');
+
+        let csv = [];
+        // Get the header row and create the CSV header
+        const headerCells = table.querySelectorAll('thead th:not(:first-child):not(:last-child)');
+        let headers = [];
+        headerCells.forEach(cell => {
+            headers.push(cell.innerText.trim());
+        });
+        csv.push(headers.join(','));
+
+        // Iterate over each table row
+        rows.forEach(row => {
+            // Check if the user is verified (is_verified = 1)
+            // You need a way to identify this in the HTML. 
+            // The simplest way is to add a data attribute to the row in your PHP loop.
+    
+            // Let's assume you have a way to check for the 'Registered' badge.
+            const statusCell = row.querySelector('td:nth-child(6) .badge-success'); // 6th cell has the status badge
+            
+            if (statusCell) {
+                let rowData = [];
+                // Select all cells in the row, excluding the first (checkbox) and last (actions)
+                const cells = row.querySelectorAll('td:not(:first-child):not(:last-child)');
+                
+                cells.forEach(cell => {
+                    let text = cell.innerText.trim();
+                    // Handle cells with images or badges
+                    const img = cell.querySelector('img');
+                    if (img) {
+                        text = img.getAttribute('src');
+                    }
+                    
+                    // Sanitize text to prevent issues with commas and quotes
+                    text = text.replace(/"/g, '""'); // Escape double quotes
+                    if (text.includes(',')) {
+                        text = `"${text}"`; // Enclose in quotes if it contains a comma
+                    }
+                    rowData.push(text);
+                });
+                csv.push(rowData.join(','));
+            }
+        });
+
+        const csvString = csv.join('\n');
+        const filename = 'senior_citizen_masterlist.csv';
+        
+        // Create a blob and URL to trigger the download
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    });
 </script>

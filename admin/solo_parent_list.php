@@ -1,7 +1,7 @@
 <div class="card mt-4">
     <div class="card-header">
         <a href="" class="btn btn-success btn-flat"><i class="fa fa-plus"></i> Add New</a>
-        <button class="btn btn-info btn-flat"><i class="fa fa-file-excel"></i> Download</button>
+       
         <button class="btn btn-warning btn-flat" id="printSelectedIds"><i class="fa fa-print"></i> Print
             ID</button>
 
@@ -79,11 +79,11 @@
                         <td><?= $row['age']; ?></td>
                         <td><?= $address; ?></td>
                         <td>
-                            <a href="./index.php?page=view_solo_application&id=<?= $row['spa_id']; ?>"
+                            <a href="./index.php?page=view_solo_application&spa_id=<?= $row['spa_id']; ?>"
                                 class="btn btn-success text-white btn-sm btn-flat">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="./index.php?page=edit_solo_application&id=<?= $row['spa_id']; ?>"
+                            <a href="./index.php?page=edit_solo_application&spa_id=<?= $row['spa_id']; ?>"
                                 class="btn btn-lightblue text-white btn-sm btn-flat">
                                 <i class="fas fa-edit"></i>
                             </a>
@@ -99,6 +99,11 @@
         </table>
     </div>
 </div>
+<script>
+	$(document).ready(function () {
+		$('#soloParentTable').dataTable()
+	})
+</script>
 <script>
     function printSoloParentID(data) {
         const win = window.open('', '', 'height=1000,width=800');

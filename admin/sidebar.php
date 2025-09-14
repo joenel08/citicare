@@ -78,7 +78,7 @@
         </li>
 
         <li class="nav-item dropdown">
-          <a href="./index.php?page=senior_citizens_list" class="nav-link nav-senior_citizens_list">
+          <a href="./index.php?page=senior_citizens_list" class="nav-link nav-senior_citizens_list nav-view_senior_application">
             <i class="nav-icon 	fas fa-blind"></i>
              <!-- <img src="assets/img/senior_icon.png" class="nav-icon" alt=""> -->
             <p>
@@ -99,7 +99,7 @@
         </li>
         <li class="nav-item dropdown">
           <a href="./index.php?page=solo_parent_list"
-            class="nav-link nav-solo_parent_list">
+            class="nav-link nav-solo_parent_list nav-view_solo_application">
             <i class="nav-icon fas fa-restroom"></i>
             <!-- <img src="assets/img/solo_parent_icon.png" class="nav-icon" alt=""> -->
 

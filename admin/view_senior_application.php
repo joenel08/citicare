@@ -240,17 +240,18 @@ function healthChecked($status, $value)
 
 
             <div class="text-right mt-3 no-print">
-                <a href="./index.php?page=senior_citizens_list" class="btn btn-secondary btn-flat">Back</a>
+                <a href="./index.php?page=senior_citizens_list" class="btn btn-secondary btn-flat"><i class="fa fa-arrow-left"></i> Back</a>
                 <?php
                 if ($row['is_verified'] == 1) { ?>
                     <a class="btn btn-danger btn-flat declineUser" href="javascript:void(0)"
-                        data-id="<?php echo $row['sc_id'] ?>">Decline</a>
+                        data-id="<?php echo $row['sc_id'] ?>"><i class="fa fa-times"></i> Decline</a>
 
                 <?php } else { ?>
                     <a class="btn btn-primary btn-flat acceptUser" href="javascript:void(0)"
-                        data-id="<?php echo $row['sc_id'] ?>">Accept</a>
+                        data-id="<?php echo $row['sc_id'] ?>"><i class="fa fa-check"></i> Accept</a>
                 <?php } ?>
-                <button onclick="window.print()" class="btn btn-success btn-flat">Print</button>
+                 <button onclick="window.print()" class="btn btn-success btn-flat"><i class="fa fa-print"></i> Print</button>
+                 <button class="btn btn-info btn-flat"><i class="fa fa-file-pdf"></i> Download</button>
             </div>
         </div>
     </div>
@@ -264,7 +265,7 @@ function healthChecked($status, $value)
 
         $('.acceptUser').click(function () {
 
-            _conf("Are you sure you want to approve this user?", "approve_user", [$(this).attr('data-id')])
+            _conf("Are you sure you want to approve this senior citizens application?", "approve_user", [$(this).attr('data-id')])
         })
 
     })
@@ -276,7 +277,7 @@ function healthChecked($status, $value)
             data: { id: $id },
             success: function (resp) {
                 if (resp == 1) {
-                    alert_toast("Data successfully deleted", 'success')
+                    alert_toast("Senior Citizens Application successfully approved!", 'success')
                     setTimeout(function () {
                         location.reload()
                     }, 1500)

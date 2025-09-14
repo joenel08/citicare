@@ -27,7 +27,7 @@ class Action
 	function login()
 	{
 		extract($_POST);
-		
+
 
 		// Only allow admin users to log in
 		$login = 1;
@@ -346,12 +346,18 @@ class Action
 		// Build QR code content
 		$qrContent = "$fullName - $idCardNo - $age";
 
-		// Define file path
+		// Define directory and filename
 		$qrDir = 'assets/uploads/qrcodes';
 		if (!file_exists($qrDir)) {
-			mkdir($qrDir, 0777, true);
+			mkdir($qrDir, 0755, true);
 		}
-		$qrFile = "$qrContent.png";
+
+		// Create a safe filename without the full path
+		$safeFileName = preg_replace('/[^a-zA-Z0-9-.]/', '_', $qrContent);
+		$qrFileName = "$safeFileName.png";
+
+		// Define the full path for saving the file
+		$fullPath = $qrDir . '/' . $qrFileName;
 
 		// Generate QR code
 		$qr = Builder::create()
@@ -363,12 +369,12 @@ class Action
 			->margin(10)
 			->build();
 
-		// Save to file
-		$qr->saveToFile($qrFile);
+		// Save to file using the full path
+		$qr->saveToFile($fullPath);
 
-		// Update database
+		// Update database with the filename only
 		$stmt = $this->db->prepare("UPDATE senior_citizens SET is_verified = 1, idCard_no = ?, qr_code = ? WHERE sc_id = ?");
-		$stmt->bind_param("ssi", $idCardNo, $qrFile, $id);
+		$stmt->bind_param("ssi", $idCardNo, $qrFileName, $id);
 
 		if ($stmt->execute()) {
 			return 1;
@@ -377,6 +383,66 @@ class Action
 		}
 	}
 
+
+	function approve_user_solo()
+	{
+		$id = $_POST['id'];
+
+		// Fetch user data
+		$res = $this->db->query("SELECT first_name, middle_name, last_name, age FROM solo_parent_applications WHERE spa_id = $id");
+		$row = $res->fetch_assoc();
+
+		$fullName = strtoupper($row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']);
+		$age = $row['age'];
+		$year = date("Y");
+
+		// Count verified users
+		$result = $this->db->query("SELECT COUNT(*) as total FROM solo_parent_applications WHERE is_verified = 1");
+		$verifiedCount = $result->fetch_assoc()['total'] + 1;
+
+		// Format ID number
+		$idCardNo = $year . '-' . str_pad($verifiedCount, 2, '0', STR_PAD_LEFT);
+
+		// Build QR code content
+		$qrContent = "$fullName - $idCardNo - $age";
+
+		// Define directory and filename
+		$qrDir = 'assets/uploads/qrcodes';
+		if (!file_exists($qrDir)) {
+			mkdir($qrDir, 0755, true);
+		}
+
+		// Create a safe filename without the full path
+		$safeFileName = preg_replace('/[^a-zA-Z0-9-.]/', '_', $qrContent);
+		$qrFileName = "$safeFileName.png";
+
+		// Define the full path for saving the file
+		$fullPath = $qrDir . '/' . $qrFileName;
+
+		// Generate QR code
+		$qr = Builder::create()
+			->writer(new PngWriter())
+			->data($qrContent)
+			->encoding(new Encoding('UTF-8'))
+			->errorCorrectionLevel(new ErrorCorrectionLevelHigh())
+			->size(300)
+			->margin(10)
+			->build();
+
+		// Save to file using the full path
+		$qr->saveToFile($fullPath);
+
+		$datetimenow = date('Y-m-d H:i:s');
+		// Update database with the filename only
+		$stmt = $this->db->prepare("UPDATE solo_parent_applications SET is_verified = 1, idCard_no = ?, qr_code = ?, date_verified =? WHERE spa_id = ?");
+		$stmt->bind_param("sssi", $idCardNo, $qrFileName, $datetimenow, $id);
+
+		if ($stmt->execute()) {
+			return 1;
+		} else {
+			echo "error";
+		}
+	}
 	function save_news()
 	{
 		$n_id = $_POST['n_id'];
@@ -546,49 +612,49 @@ class Action
 		}
 	}
 	function save_attendance()
-{
-    $qr_data = $_POST['qr_data']; // Example: JDHHD JDJDU JDJDH - 2025-02 - 65
-    $assistance_id = $_POST['assistance_id'];
+	{
+		$qr_data = $_POST['qr_data']; // Example: JDHHD JDJDU JDJDH - 2025-02 - 65
+		$assistance_id = $_POST['assistance_id'];
 
-    // Build full QR code path with .png
-    $qr_full_path = 'assets/uploads/qrcodes/' . $qr_data . '.png';
+		// Build full QR code path with .png
+		$qr_full_path = 'assets/uploads/qrcodes/' . $qr_data . '.png';
 
-    // Check if QR code exists
-    $stmt = $this->db->prepare("SELECT user_id FROM senior_citizens WHERE qr_code = ?");
-    $stmt->bind_param("s", $qr_full_path);
-    $stmt->execute();
-    $result = $stmt->get_result();
+		// Check if QR code exists
+		$stmt = $this->db->prepare("SELECT user_id FROM senior_citizens WHERE qr_code = ?");
+		$stmt->bind_param("s", $qr_full_path);
+		$stmt->execute();
+		$result = $stmt->get_result();
 
-    if ($result->num_rows === 0) {
-        echo "not_found";
-        return;
-    }
+		if ($result->num_rows === 0) {
+			echo "not_found";
+			return;
+		}
 
-    $row = $result->fetch_assoc();
-    $user_id = $row['user_id'];
-    $today = date('Y-m-d');
+		$row = $result->fetch_assoc();
+		$user_id = $row['user_id'];
+		$today = date('Y-m-d');
 
-    // Check if already marked
-    $check = $this->db->prepare("SELECT attendance_id FROM attendance WHERE user_id = ? AND assistance_id = ? AND date_marked = ?");
-    $check->bind_param("iis", $user_id, $assistance_id, $today);
-    $check->execute();
-    $checkResult = $check->get_result();
+		// Check if already marked
+		$check = $this->db->prepare("SELECT attendance_id FROM attendance WHERE user_id = ? AND assistance_id = ? AND date_marked = ?");
+		$check->bind_param("iis", $user_id, $assistance_id, $today);
+		$check->execute();
+		$checkResult = $check->get_result();
 
-    if ($checkResult->num_rows > 0) {
-        echo "already_marked";
-        return;
-    }
+		if ($checkResult->num_rows > 0) {
+			echo "already_marked";
+			return;
+		}
 
-    // Insert attendance
-    $insert = $this->db->prepare("INSERT INTO attendance (user_id, assistance_id, date_marked) VALUES (?, ?, ?)");
-    $insert->bind_param("iis", $user_id, $assistance_id, $today);
+		// Insert attendance
+		$insert = $this->db->prepare("INSERT INTO attendance (user_id, assistance_id, date_marked) VALUES (?, ?, ?)");
+		$insert->bind_param("iis", $user_id, $assistance_id, $today);
 
-    if ($insert->execute()) {
-        echo "success";
-    } else {
-        echo "error_saving";
-    }
-}
+		if ($insert->execute()) {
+			echo "success";
+		} else {
+			echo "error_saving";
+		}
+	}
 
 
 

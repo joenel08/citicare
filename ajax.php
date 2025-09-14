@@ -74,6 +74,11 @@ if($action == 'approve_user'){
 	if($save)
 		echo $save;
 }
+if($action == 'approve_user_solo'){
+	$save = $crud->approve_user_solo();
+	if($save)
+		echo $save;
+}
 
 if($action == 'save_news'){
 	$save = $crud->save_news();

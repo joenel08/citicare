@@ -33,15 +33,16 @@ $needs_problems = $_POST['needs_problems'] ?? '';
 $family_resources = $_POST['family_resources'] ?? '';
 $certify_information = $_POST['certify_information'] ?? '0';
 $children = json_decode($_POST['children'] ?? '[]', true);
+$application_type = 1;
 
 // Insert basic info
 $sql = "INSERT INTO solo_parent_applications (
-    user_id, first_name, middle_name, last_name, extension_name, birthdate, age, gender, civil_status, 
+    user_id, application_type, first_name, middle_name, last_name, extension_name, birthdate, age, gender, civil_status, 
     education, religion, monthly_income, email, pantawid_beneficiary, barangay, municipality, 
     province, solo_parent_type, solo_parent_since, other_classification, needs_problems, 
     family_resources, certify_information, status, date_submitted
 ) VALUES (
-    '$user_id', '$first_name', '$middle_name', '$last_name', '$extension_name', '$birthdate', '$age', '$gender', 
+    '$user_id','$application_type', '$first_name', '$middle_name', '$last_name', '$extension_name', '$birthdate', '$age', '$gender', 
     '$civil_status', '$education', '$religion', '$monthly_income', '$email', '$pantawid_beneficiary', 
     '$barangay', '$municipality', '$province', '$solo_parent_type', '$solo_parent_since', 
     '$other_classification', '$needs_problems', '$family_resources', '$certify_information', 'Pending', NOW()
