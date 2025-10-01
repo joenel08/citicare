@@ -101,7 +101,30 @@
 </div>
 <script>
 	$(document).ready(function () {
-		$('#soloParentTable').dataTable()
+		$('#soloParentTable').dataTable();
+
+
+        $('.delete_user').click(function(){
+	_conf("Are you sure to delete this user?","delete_user",[$(this).attr('data-id')])
+	})
+		
+	function delete_user($id){
+		start_load()
+		$.ajax({
+			url:'ajax.php?action=delete_soloparent_user',
+			method:'POST',
+			data:{id:$id},
+			success:function(resp){
+				if(resp==1){
+					alert_toast("Data successfully deleted",'success')
+					setTimeout(function(){
+						location.reload()
+					},1500)
+
+				}
+			}
+		})
+	}
 	})
 </script>
 <script>
