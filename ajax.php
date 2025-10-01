@@ -91,6 +91,17 @@ if($action == 'delete_news'){
 	if($save)
 		echo $save;
 }
+if($action == 'update_senior'){
+	$save = $crud->update_senior();
+	if($save)
+		echo $save;
+}
+
+if($action == 'save_senior'){
+	$save = $crud->save_senior();
+	if($save)
+		echo $save;
+}
 if($action == 'delete_senior_user'){
 	$save = $crud->delete_senior_user();
 	if($save)

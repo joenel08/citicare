@@ -443,6 +443,254 @@ class Action
 			echo "error";
 		}
 	}
+
+	function save_senior()
+	{
+		// Sanitize inputs
+		$first_name = $this->db->real_escape_string($_POST['first_name']);
+		$middle_name = $this->db->real_escape_string($_POST['middle_name']);
+		$last_name = $this->db->real_escape_string($_POST['last_name']);
+		$birthdate = $this->db->real_escape_string($_POST['birthdate']);
+		$age = intval($_POST['age']);
+		$gender = $this->db->real_escape_string($_POST['gender']);
+		$civil_status = $this->db->real_escape_string($_POST['civil_status']);
+		$education = $this->db->real_escape_string($_POST['education']);
+		$occupation = $this->db->real_escape_string($_POST['occupation']);
+		$place_of_birth = $this->db->real_escape_string($_POST['place_of_birth']);
+		$contact_no = $this->db->real_escape_string($_POST['contact_no']);
+		$barangay = $this->db->real_escape_string($_POST['barangay']);
+		$emergency_name = $this->db->real_escape_string($_POST['emergency_name']);
+		$emergency_contact = $this->db->real_escape_string($_POST['emergency_contact']);
+		$emergency_relationship = $this->db->real_escape_string($_POST['emergency_relationship']);
+		$health_status = $this->db->real_escape_string($_POST['health_status'] ?? '');
+
+		// Checkbox values
+		$social_pensioner = isset($_POST['social_pensioner']) ? 1 : 0;
+		$retiree = isset($_POST['retiree']) ? 1 : 0;
+		$is_gsis = isset($_POST['is_gsis']) ? 1 : 0;
+		$retiree_desc = $this->db->real_escape_string($_POST['retiree_desc'] ?? '');
+
+		// File uploads
+		$uploadDir = "assets/uploads/";
+		if (!file_exists($uploadDir)) {
+			mkdir($uploadDir, 0755, true);
+		}
+
+		function generateUniqueApplicationNo($conn)
+		{
+			do {
+				$appNo = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+				$check = $conn->prepare("SELECT sc_id FROM senior_citizens WHERE application_no = ?");
+				$check->bind_param("s", $appNo);
+				$check->execute();
+				$check->store_result();
+			} while ($check->num_rows > 0);
+			$check->close();
+			return $appNo;
+		}
+
+		$applicationNo = generateUniqueApplicationNo($this->db);
+
+		function uploadFileNew($field, $uploadDir)
+		{
+			if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
+				$ext = pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION);
+				$newName = $field . "_" . time() . "." . $ext;
+				$targetPath = $uploadDir . $newName;
+				move_uploaded_file($_FILES[$field]['tmp_name'], $targetPath);
+				return $newName;
+			}
+			return "";
+		}
+
+		// $photo_id = uploadFileNew("photo_id", $uploadDir);
+		$photo_id = ""; // initialize
+
+		// Case 1: Captured photo from camera
+		if (!empty($_POST['photo_id_data'])) {
+			$imgData = $_POST['photo_id_data'];
+			$imgData = str_replace('data:image/jpeg;base64,', '', $imgData);
+			$imgData = str_replace(' ', '+', $imgData);
+			$image = base64_decode($imgData);
+
+			$fileName = "photo_" . time() . ".jpg";
+			$filePath = $uploadDir . $fileName;
+
+			if (file_put_contents($filePath, $image)) {
+				$photo_id = $fileName;
+			}
+		}
+		// Case 2: File upload (if no camera capture)
+		elseif (isset($_FILES['photo_id_file']) && $_FILES['photo_id_file']['error'] === UPLOAD_ERR_OK) {
+			$ext = pathinfo($_FILES['photo_id_file']['name'], PATHINFO_EXTENSION);
+			$fileName = "photo_" . time() . "." . $ext;
+			$filePath = $uploadDir . $fileName;
+
+			if (move_uploaded_file($_FILES['photo_id_file']['tmp_name'], $filePath)) {
+				$photo_id = $fileName;
+			}
+		}
+		$birth_proof = uploadFileNew("birth_proof", $uploadDir);
+		$residency_proof = uploadFileNew("residency_proof", $uploadDir);
+
+		// === Step 1: Insert into `users` table first ===
+		$defaultPass = md5("lgustamaria");
+		$sql_user = "INSERT INTO users (contact_info, password, user_type, otp_code, otp_expiry, verified) 
+                 VALUES ('$contact_no', '$defaultPass', 'Senior Citizen', NULL, NULL, 1)";
+		$saveUser = $this->db->query($sql_user);
+
+		if (!$saveUser) {
+			echo "Error inserting user: " . $this->db->error;
+			return;
+		}
+
+		$userId = $this->db->insert_id; // Get the new user ID
+
+		// === Step 2: Insert into `senior_citizens` table ===
+		$sql = "INSERT INTO senior_citizens 
+        (application_no, user_id, first_name, middle_name, last_name, birthdate, age, gender, civil_status, education, occupation, place_of_birth,
+         contact_no, barangay, emergency_name, emergency_contact, emergency_relationship, social_pensioner, retiree, retiree_desc,
+         is_gsis, health_status, photo_id, birth_proof, residency_proof)
+        VALUES ($applicationNo,$userId,'$first_name','$middle_name','$last_name','$birthdate',$age,'$gender','$civil_status','$education','$occupation',
+            '$place_of_birth','$contact_no','$barangay','$emergency_name','$emergency_contact','$emergency_relationship',
+            $social_pensioner,$retiree,'$retiree_desc',$is_gsis,'$health_status','$photo_id','$birth_proof','$residency_proof'
+        )";
+
+		$save = $this->db->query($sql);
+		if ($save) {
+			$newId = $this->db->insert_id;
+
+			// ===== Generate QR + ID =====
+			$res = $this->db->query("SELECT first_name, middle_name, last_name, age FROM senior_citizens WHERE sc_id = $newId");
+			$row = $res->fetch_assoc();
+
+			$fullName = strtoupper($row['first_name'] . ' ' . $row['middle_name'] . ' ' . $row['last_name']);
+			$age = $row['age'];
+			$year = date("Y");
+
+			$result = $this->db->query("SELECT COUNT(*) as total FROM senior_citizens WHERE is_verified = 1");
+			$verifiedCount = $result->fetch_assoc()['total'] + 1;
+
+			$idCardNo = $year . '-' . str_pad($verifiedCount, 2, '0', STR_PAD_LEFT);
+			$qrContent = "$fullName - $idCardNo - $age";
+
+			$qrDir = 'assets/uploads/qrcodes';
+			if (!file_exists($qrDir)) {
+				mkdir($qrDir, 0755, true);
+			}
+
+			$safeFileName = preg_replace('/[^a-zA-Z0-9-.]/', '_', $qrContent);
+			$qrFileName = "$safeFileName.png";
+			$fullPath = $qrDir . '/' . $qrFileName;
+
+			$qr = Builder::create()
+				->writer(new PngWriter())
+				->data($qrContent)
+				->encoding(new Encoding('UTF-8'))
+				->errorCorrectionLevel(new ErrorCorrectionLevelHigh())
+				->size(300)
+				->margin(10)
+				->build();
+
+			$qr->saveToFile($fullPath);
+
+			$stmt = $this->db->prepare("UPDATE senior_citizens SET is_verified = 1, idCard_no = ?, qr_code = ? WHERE sc_id = ?");
+			$stmt->bind_param("ssi", $idCardNo, $qrFileName, $newId);
+			$stmt->execute();
+
+			return 1;
+		} else {
+			echo "Error inserting senior: " . $this->db->error;
+		}
+
+	}
+	function update_senior()
+	{
+		$sc_id = intval($_POST['sc_id']);
+
+		// Sanitize inputs
+		$first_name = $this->db->real_escape_string($_POST['first_name']);
+		$middle_name = $this->db->real_escape_string($_POST['middle_name']);
+		$last_name = $this->db->real_escape_string($_POST['last_name']);
+		$birthdate = $this->db->real_escape_string($_POST['birthdate']);
+		$age = intval($_POST['age']);
+		$gender = $this->db->real_escape_string($_POST['gender']);
+		$civil_status = $this->db->real_escape_string($_POST['civil_status']);
+		$education = $this->db->real_escape_string($_POST['education']);
+		$occupation = $this->db->real_escape_string($_POST['occupation']);
+		$place_of_birth = $this->db->real_escape_string($_POST['place_of_birth']);
+		$contact_no = $this->db->real_escape_string($_POST['contact_no']);
+		$barangay = $this->db->real_escape_string($_POST['barangay']);
+		$emergency_name = $this->db->real_escape_string($_POST['emergency_name']);
+		$emergency_contact = $this->db->real_escape_string($_POST['emergency_contact']);
+		$emergency_relationship = $this->db->real_escape_string($_POST['emergency_relationship']);
+		$health_status = $this->db->real_escape_string($_POST['health_status'] ?? '');
+
+		// Checkbox values (1 if checked, 0 if not)
+		$social_pensioner = isset($_POST['social_pensioner']) ? 1 : 0;
+		$retiree = isset($_POST['retiree']) ? 1 : 0;
+		$is_gsis = isset($_POST['is_gsis']) ? 1 : 0;
+		$retiree_desc = $this->db->real_escape_string($_POST['retiree_desc'] ?? '');
+
+		// Handle file uploads
+		$uploadDir = "assets/uploads/";
+		$photo_id = $row_photo = "";
+		$birth_proof = $row_birth = "";
+		$residency_proof = $row_residency = "";
+
+		// Get current values first (in case no new file is uploaded)
+		$getOld = $this->db->query("SELECT photo_id, birth_proof, residency_proof FROM senior_citizens WHERE sc_id = $sc_id");
+		$oldRow = $getOld->fetch_assoc();
+
+		function uploadFile($field, $oldFile, $uploadDir)
+		{
+			if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
+				$ext = pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION);
+				$newName = $field . "_" . time() . "." . $ext;
+				$targetPath = $uploadDir . $newName;
+				move_uploaded_file($_FILES[$field]['tmp_name'], $targetPath);
+				return $newName;
+			}
+			return $oldFile; // keep old if no new file uploaded
+		}
+
+		$photo_id = uploadFile("photo_id", $oldRow['photo_id'], $uploadDir);
+		$birth_proof = uploadFile("birth_proof", $oldRow['birth_proof'], $uploadDir);
+		$residency_proof = uploadFile("residency_proof", $oldRow['residency_proof'], $uploadDir);
+
+		// Update query
+		$sql = "UPDATE senior_citizens SET
+                first_name='$first_name',
+                middle_name='$middle_name',
+                last_name='$last_name',
+                birthdate='$birthdate',
+                age=$age,
+                gender='$gender',
+                civil_status='$civil_status',
+                education='$education',
+                occupation='$occupation',
+                place_of_birth='$place_of_birth',
+                contact_no='$contact_no',
+                barangay='$barangay',
+                emergency_name='$emergency_name',
+                emergency_contact='$emergency_contact',
+                emergency_relationship='$emergency_relationship',
+                social_pensioner=$social_pensioner,
+                retiree=$retiree,
+                retiree_desc='$retiree_desc',
+                is_gsis=$is_gsis,
+                health_status='$health_status',
+                photo_id='$photo_id',
+                birth_proof='$birth_proof',
+                residency_proof='$residency_proof'
+            WHERE sc_id=$sc_id";
+		$save = $this->db->query($sql);
+		if ($save) {
+			return 1;
+		} else {
+			echo "Error updating record: " . $this->db->error;
+		}
+	}
 	function save_news()
 	{
 		$n_id = $_POST['n_id'];
@@ -523,7 +771,7 @@ class Action
 			return 1;
 	}
 
-	
+
 
 	function delete_soloparent_user()
 	{

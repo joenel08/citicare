@@ -4,7 +4,7 @@
 	<div class="col-sm">
 		<div class="card">
 			<div class="card-header">
-				<a href="" class="btn btn-success btn-flat"><i class="fa fa-plus"></i> Add New</a>
+				<a href="./index.php?page=new_senior_citizen_application" class="btn btn-success btn-flat"><i class="fa fa-plus"></i> Add New</a>
 				<button class="btn btn-info btn-flat" id="downloadMasterlist"><i class="fa fa-file-excel"></i> Download</button>
 				<button class="btn btn-warning btn-flat" id="printSelectedIds"><i class="fa fa-print"></i> Print
 					ID</button>
@@ -108,7 +108,7 @@
 										class="btn btn-success text-white btn-sm btn-flat">
 										<i class="fas fa-eye"></i>
 									</a>
-									<a href="./index.php?page=edit_user&sec_id=<?= $row['sc_id']; ?>"
+									<a href="./index.php?page=edit_senior_application&sec_id=<?= $row['sc_id']; ?>"
 										class="btn btn-lightblue text-white btn-sm btn-flat">
 										<i class="fas fa-edit"></i>
 									</a>
