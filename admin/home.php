@@ -49,7 +49,7 @@
         <span class="info-box-number">
           <?php
           echo $conn->query("SELECT sc.user_id, u.id from users u left join senior_citizens sc on sc.user_id = u.id where sc.is_verified = 1")->num_rows
-          ?>
+            ?>
 
         </span>
       </div>
@@ -64,7 +64,14 @@
 
       <div class="info-box-content">
         <span class="info-box-text">Total PWDs</span>
-        <span class="info-box-number">678</span>
+        <span class="info-box-number">
+          <?php
+          echo $conn->query("SELECT pw.user_id, u.id 
+                       FROM pwd_application pw 
+                       LEFT JOIN users u  ON pw.user_id = u.id")->num_rows;
+          ?>
+        </span>
+
       </div>
       <!-- /.info-box-content -->
     </div>
@@ -82,7 +89,9 @@
 
       <div class="info-box-content">
         <span class="info-box-text">Total Solo Parents</span>
-        <span class="info-box-number">760</span>
+        <span class="info-box-number"> <?php
+        echo $conn->query("SELECT sp.user_id, u.id from users u left join solo_parent_applications sp on sp.user_id = u.id where sp.is_verified = 1")->num_rows
+          ?></span>
       </div>
       <!-- /.info-box-content -->
     </div>
@@ -96,11 +105,8 @@
     <canvas id="barangayChart" width="1200" height="600"></canvas>
   </div>
 </div>
-
 <?php
-// Dummy data
-
-
+// Get barangay list
 $barangays = [
   "Bangad", "Buenavista", "Calamagui North", "Calamagui East", "Calamagui West", 
   "Divisoria", "Lingaling", "Mozzozzin Sur", "Mozzozzin North", "Naganacan", 
@@ -108,30 +114,97 @@ $barangays = [
   "San Isidro East", "San Isidro West", "San Rafael West", "San Rafael East", 
   "Villabuena"
 ];
+$res = $conn->query("
+    SELECT DISTINCT barangay FROM (
+        SELECT barangay COLLATE utf8mb4_general_ci AS barangay FROM senior_citizens 
+        UNION 
+        SELECT barangay COLLATE utf8mb4_general_ci FROM pwd_application 
+        UNION 
+        SELECT barangay COLLATE utf8mb4_general_ci FROM solo_parent_applications
+    ) b ORDER BY barangay
+");
 
-// For now, let's repeat the data to match the number of barangays
-// Adjusting arrays for a match to the number of barangays
-$senior_citizens = array_merge([59, 35, 63, 89, 139, 77, 51, 50, 130, 85], [63, 89, 139, 77, 51, 50, 59, 35, 63, 89]);
-$pwds = array_merge([14, 9, 15, 22, 34, 19, 12, 12, 31, 21], [15, 22, 34, 19, 12, 12, 14, 9, 15, 22]);
-$solo_parents = array_merge([25, 15, 27, 38, 60, 33, 22, 22, 56, 37], [27, 38, 60, 33, 22, 22, 25, 15, 27, 38]);
+while($row = $res->fetch_assoc()){
+    $barangays[] = $row['barangay'];
+}
+$senior_citizens = [];
+$pwds = [];
+$solo_parents = [];
 
-// Create an associative array to hold the barangay and their respective data
-$barangay_data = [];
+foreach($barangays as $brgy){
+    // Seniors
+    $res = $conn->query("SELECT COUNT(*) as total 
+                         FROM senior_citizens 
+                         WHERE barangay COLLATE utf8mb4_general_ci = '$brgy' 
+                           AND is_verified = 1");
+    $row = $res->fetch_assoc();
+    $senior_citizens[] = (int)$row['total'];
 
-// Loop through the barangays and match with the corresponding data
-for ($i = 0; $i < count($barangays); $i++) {
-  $barangay_data[$barangays[$i]] = [
-      "senior_citizens" => isset($senior_citizens[$i]) ? $senior_citizens[$i] : 0,
-      "pwds" => isset($pwds[$i]) ? $pwds[$i] : 0,
-      "solo_parents" => isset($solo_parents[$i]) ? $solo_parents[$i] : 0
-  ];
+    // PWDs
+    $res = $conn->query("SELECT COUNT(*) as total 
+                         FROM pwd_application 
+                         WHERE barangay COLLATE utf8mb4_general_ci = '$brgy'");
+    $row = $res->fetch_assoc();
+    $pwds[] = (int)$row['total'];
+
+    // Solo Parents
+    $res = $conn->query("SELECT COUNT(*) as total 
+                         FROM solo_parent_applications 
+                         WHERE barangay COLLATE utf8mb4_general_ci = '$brgy' 
+                           AND is_verified = 1");
+    $row = $res->fetch_assoc();
+    $solo_parents[] = (int)$row['total'];
 }
 
 ?>
 
+<?php
+// Dummy data
 
+
+// $barangays = [
+//   "Bangad",
+//   "Buenavista",
+//   "Calamagui North",
+//   "Calamagui East",
+//   "Calamagui West",
+//   "Divisoria",
+//   "Lingaling",
+//   "Mozzozzin Sur",
+//   "Mozzozzin North",
+//   "Naganacan",
+//   "Poblacion 1",
+//   "Poblacion 2",
+//   "Poblacion 3",
+//   "Quinagabian",
+//   "San Antonio",
+//   "San Isidro East",
+//   "San Isidro West",
+//   "San Rafael West",
+//   "San Rafael East",
+//   "Villabuena"
+// ];
+
+// // For now, let's repeat the data to match the number of barangays
+// // Adjusting arrays for a match to the number of barangays
+// $senior_citizens = array_merge([59, 35, 63, 89, 139, 77, 51, 50, 130, 85], [63, 89, 139, 77, 51, 50, 59, 35, 63, 89]);
+// $pwds = array_merge([14, 9, 15, 22, 34, 19, 12, 12, 31, 21], [15, 22, 34, 19, 12, 12, 14, 9, 15, 22]);
+// $solo_parents = array_merge([25, 15, 27, 38, 60, 33, 22, 22, 56, 37], [27, 38, 60, 33, 22, 22, 25, 15, 27, 38]);
+
+// // Create an associative array to hold the barangay and their respective data
+// $barangay_data = [];
+
+// // Loop through the barangays and match with the corresponding data
+// for ($i = 0; $i < count($barangays); $i++) {
+//   $barangay_data[$barangays[$i]] = [
+//     "senior_citizens" => isset($senior_citizens[$i]) ? $senior_citizens[$i] : 0,
+//     "pwds" => isset($pwds[$i]) ? $pwds[$i] : 0,
+//     "solo_parents" => isset($solo_parents[$i]) ? $solo_parents[$i] : 0
+//   ];
+// }
+
+?>
 <script>
-// Convert PHP arrays to JavaScript
 const barangays = <?php echo json_encode($barangays); ?>;
 const seniorCitizens = <?php echo json_encode($senior_citizens); ?>;
 const pwds = <?php echo json_encode($pwds); ?>;
@@ -163,22 +236,15 @@ const barangayChart = new Chart(ctx, {
     options: {
         responsive: true,
         scales: {
-            x: {
-                stacked: true
-            },
-            y: {
-                beginAtZero: true,
-                stacked: true
-            }
+            x: { stacked: true },
+            y: { beginAtZero: true, stacked: true }
         },
         plugins: {
             title: {
                 display: true,
-                text: 'Population Data per Barangay (Dummy Data)'
+                text: 'Population Data per Barangay'
             },
-            legend: {
-                position: 'top'
-            }
+            legend: { position: 'top' }
         }
     }
 });

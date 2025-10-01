@@ -528,7 +528,7 @@ class Action
 	function delete_soloparent_user()
 	{
 		extract($_POST);
-		$delete = $this->db->query("DELETE FROM solo_parent_application where spa_id = " . $id);
+		$delete = $this->db->query("DELETE FROM solo_parent_applications where spa_id = " . $id);
 		if ($delete)
 			return 1;
 	}
